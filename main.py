@@ -24,8 +24,8 @@ persons: Dict[UUID, PersonRead] = {}
 addresses: Dict[UUID, AddressRead] = {}
 
 app = FastAPI(
-    title="Person/Address API",
-    description="Demo FastAPI app using Pydantic v2 models for Person and Address",
+    title="Matcha Budget Tracker API",
+    description="Demo FastAPI app using Pydantic v2 models for Matcha Budget Tracker",
     version="0.1.0",
 )
 
