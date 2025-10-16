@@ -73,7 +73,7 @@ class ExpenseCreate(ExpenseBase):
     }
 
 
-class AddressUpdate(BaseModel):
+class ExpenseUpdate(BaseModel):
     """Partial update; address ID is taken from the path, not the body."""
     expense_date: Optional[date] = Field(
         None, description="Date of the matcha order/creation.", json_schema_extra={"example": "2025-01-02"}
