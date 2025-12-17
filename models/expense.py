@@ -18,11 +18,6 @@ class ExpenseBase(BaseModel):
         description="Date of the Matcha order/creation.",
         json_schema_extra={"example": "2025-01-01"},
     )
-    user_id: UUID = Field(
-        ..., 
-        description="User who created this expense",
-        json_schema_extra={"example": "550e8400-e29b-41d4-a716-446655440000"},
-    )
     order_name: str = Field(
         ...,
         description="Name of the Matcha order.",
@@ -68,7 +63,6 @@ class ExpenseCreate(ExpenseBase):
                 {
                     "id": "11111111-1111-4111-8111-111111111111",
                     "expense_date": "2020-01-20",
-                    "user-id": "077f4101-60fb-4203-854c-edb1866354af",
                     "order_name": "Matcha latte w/ oat milk",
                     "type": "Self-made",
                     "location": "Home",
@@ -131,7 +125,6 @@ class ExpenseRead(ExpenseBase):
                 {
                     "id": "550e8400-e29b-41d4-a716-446655440000",
                     "expense_date": "2025-01-01",
-                    "user_id": "077f4101-60fb-4203-854c-edb1866354af",
                     "order_name": "Lavender Matcha Latte w/ Oat Milk",
                     "type": "Cafe",
                     "location": "Isshiki Kijitora",

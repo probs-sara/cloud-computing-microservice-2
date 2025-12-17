@@ -26,7 +26,7 @@ from fastapi.middleware.cors import CORSMiddleware
 port = int(os.environ.get("FASTAPIPORT", 8080))
 
 # -----------------------------------------------------------------------------
-# Database Configuration - FIXED TO USE SQLITE BY DEFAULT
+# Database Configuration 
 # -----------------------------------------------------------------------------
 DATABASE_URL = os.environ.get(
     "DATABASE_URL",
@@ -91,9 +91,9 @@ class AsyncJobModel(Base):
 # Create tables
 try:
     Base.metadata.create_all(bind=engine)
-    print("✅ Database tables created successfully")
+    print("Database tables created successfully")
 except Exception as e:
-    print(f"❌ Error creating tables: {e}")
+    print(f"Error creating tables: {e}")
     raise
 
 # -----------------------------------------------------------------------------
@@ -115,7 +115,6 @@ app = FastAPI(
     version="0.2.0",
 )
 
-# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  
@@ -170,7 +169,7 @@ def location_model_to_read(location: LocationModel) -> LocationRead:
     )
 
 # -----------------------------------------------------------------------------
-# Root endpoint - FIXED: Only one definition for health checks
+# Root endpoint
 # -----------------------------------------------------------------------------
 @app.get("/")
 def root():
@@ -195,7 +194,6 @@ def create_expense(expense: ExpenseCreate, db: Session = Depends(get_db)):
     db_expense = ExpenseModel(
         id=str(expense.id),
         expense_date=expense.expense_date,
-        user_id=expense.user_id,
         order_name=expense.order_name,
         type=expense.type,
         location=expense.location,
@@ -219,13 +217,9 @@ def create_expense(expense: ExpenseCreate, db: Session = Depends(get_db)):
 def list_expenses(
     limit: int = Query(10, ge=1),
     offset: int = Query(0, ge=0),
-    user_id: Optional[UUID] = Query(None, description="Filter by user ID"),
     if_none_match: Optional[str] = Header(None),
     db: Session = Depends(get_db)
 ):
-    query = db.query(ExpenseModel)
-    if user_id:
-        query = query.filter(ExpenseModel.user_id == str(user_id))
     all_expenses = db.query(ExpenseModel).order_by(ExpenseModel.created_at.desc()).all()
     items = [expense_model_to_read(exp) for exp in all_expenses]
     
