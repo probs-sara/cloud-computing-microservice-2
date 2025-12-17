@@ -6,6 +6,7 @@ from typing import List, Optional
 from uuid import UUID, uuid4
 
 from fastapi import FastAPI, HTTPException, Depends, Query, Header
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import create_engine, Column, String, DECIMAL, DateTime, Text, Date, Float
 from sqlalchemy.orm import Session, sessionmaker, declarative_base
@@ -17,14 +18,19 @@ import time
 from models.expense import ExpenseCreate, ExpenseRead, ExpenseUpdate
 from models.location import LocationCreate, LocationRead, LocationUpdate
 
-port = int(os.environ.get("FASTAPIPORT", 8000))
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+
+
+port = int(os.environ.get("FASTAPIPORT", 8080))
 
 # -----------------------------------------------------------------------------
-# Database Configuration
+# Database Configuration - FIXED TO USE SQLITE BY DEFAULT
 # -----------------------------------------------------------------------------
 DATABASE_URL = os.environ.get(
     "DATABASE_URL",
-    "mysql+pymysql://matcha:4566427@localhost:3306/matcha_budget"
+    "sqlite:///./matcha_budget.db"  # Changed to SQLite
 )
 
 print(f"🔍 Using DATABASE_URL: {DATABASE_URL}")
@@ -39,9 +45,9 @@ try:
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     Base = declarative_base()
     
-    print("Database engine created successfully")
+    print("✅ Database engine created successfully")
 except Exception as e:
-    print(f"Error creating database engine: {e}")
+    print(f"❌ Error creating database engine: {e}")
     raise
 
 # -----------------------------------------------------------------------------
@@ -85,9 +91,9 @@ class AsyncJobModel(Base):
 # Create tables
 try:
     Base.metadata.create_all(bind=engine)
-    print("Database tables created successfully")
+    print("✅ Database tables created successfully")
 except Exception as e:
-    print(f"Error creating tables: {e}")
+    print(f"❌ Error creating tables: {e}")
     raise
 
 # -----------------------------------------------------------------------------
@@ -105,8 +111,17 @@ def get_db():
 # -----------------------------------------------------------------------------
 app = FastAPI(
     title="Matcha Budget Tracker API",
-    description="Demo FastAPI app using Pydantic v2 models with SQLAlchemy + MySQL",
+    description="Demo FastAPI app using Pydantic v2 models with SQLAlchemy",
     version="0.2.0",
+)
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # -----------------------------------------------------------------------------
@@ -155,6 +170,17 @@ def location_model_to_read(location: LocationModel) -> LocationRead:
     )
 
 # -----------------------------------------------------------------------------
+# Root endpoint - FIXED: Only one definition for health checks
+# -----------------------------------------------------------------------------
+@app.get("/")
+def root():
+    return {
+        "status": "healthy",
+        "message": "Welcome to the Matcha Budget API. See /docs for OpenAPI UI.",
+        "version": "0.2.0"
+    }
+
+# -----------------------------------------------------------------------------
 # Expense endpoints
 # -----------------------------------------------------------------------------
 
@@ -192,9 +218,13 @@ def create_expense(expense: ExpenseCreate, db: Session = Depends(get_db)):
 def list_expenses(
     limit: int = Query(10, ge=1),
     offset: int = Query(0, ge=0),
+    user_id: Optional[UUID] = Query(None, description="Filter by user ID"),
     if_none_match: Optional[str] = Header(None),
     db: Session = Depends(get_db)
 ):
+    query = db.query(ExpenseModel)
+    if user_id:
+        query = query.filter(ExpenseModel.user_id == str(user_id))
     all_expenses = db.query(ExpenseModel).order_by(ExpenseModel.created_at.desc()).all()
     items = [expense_model_to_read(exp) for exp in all_expenses]
     
@@ -410,18 +440,9 @@ def delete_location(location_id: UUID, db: Session = Depends(get_db)):
     return None
 
 # -----------------------------------------------------------------------------
-# Root
-# -----------------------------------------------------------------------------
-@app.get("/")
-def root():
-    return {
-        "message": "Welcome to the Matcha Budget API (SQLAlchemy + MySQL). See /docs for OpenAPI UI.",
-        "version": "0.2.0"
-    }
-
-# -----------------------------------------------------------------------------
 # Entrypoint for `python main.py`
 # -----------------------------------------------------------------------------
 if __name__ == "__main__":
     import uvicorn
+    print(f"🚀 Starting server on 0.0.0.0:{port}")
     uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)

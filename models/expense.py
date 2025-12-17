@@ -18,6 +18,11 @@ class ExpenseBase(BaseModel):
         description="Date of the Matcha order/creation.",
         json_schema_extra={"example": "2025-01-01"},
     )
+    user_id: UUID = Field(
+        ..., 
+        description="User who created this expense",
+        json_schema_extra={"example": "550e8400-e29b-41d4-a716-446655440000"},
+    )
     order_name: str = Field(
         ...,
         description="Name of the Matcha order.",
