@@ -195,6 +195,7 @@ def create_expense(expense: ExpenseCreate, db: Session = Depends(get_db)):
     db_expense = ExpenseModel(
         id=str(expense.id),
         expense_date=expense.expense_date,
+        user_id=expense.user_id,
         order_name=expense.order_name,
         type=expense.type,
         location=expense.location,
